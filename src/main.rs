@@ -1,7 +1,9 @@
-use std::fmt;
-use std::fmt::{Display, Formatter};
-use clap::{Parser, Subcommand, Args, ValueEnum};
+mod config;
 
+use clap::{Args, Parser, Subcommand, ValueEnum};
+
+use std::fmt::{Display, Formatter};
+use std::fmt;
 
 fn main() {
     let cli = Cli::parse();
@@ -16,30 +18,25 @@ fn main() {
         ),
 
         // remove(path)
-        Some(Commands::Remove(path)) => println!(
-            "Removing book with title {}", path.title
-        ),
+        Some(Commands::Remove(path)) => println!("Removing book with title {}", path.title),
 
         // load(path)
-        Some(Commands::Load(path)) => println!(
-            "Adding book with title {} to ereader", path.title
-        ),
+        Some(Commands::Load(path)) => println!("Adding book with title {} to ereader", path.title),
 
         // Unload(path)
-        Some(Commands::Unload(path)) => println!(
-            "Removing book with title {} from ereader", path.title
-        ),
+        Some(Commands::Unload(path)) => {
+            println!("Removing book with title {} from ereader", path.title)
+        }
 
         // Config(config)
-        Some(Commands::Config(config)) => println!(
-            "Configuring {} to {}", config.item, config.value
-        ),
+        Some(Commands::Config(config)) => {
+            println!("Configuring {} to {}", config.target, config.value)
+        }
 
         // help()
         None => println!("No command specified"),
     }
 }
-
 
 #[derive(Parser)]
 struct Cli {
@@ -47,17 +44,15 @@ struct Cli {
     command: Option<Commands>,
 }
 
-
 #[derive(Subcommand)]
 enum Commands {
-    List,  // List books in database
-    Add(AddArgs),  // Add book to database & device
-    Remove(RemoveArgs),  // Remove book from database
-    Load(LoadArgs),  // add book from database to ereader
-    Unload(UnloadArgs),  // remove book from ereader
-    Config(ConfigArgs),  // configure app => Config(item, value)
+    List,               // List books in database
+    Add(AddArgs),       // Add book to database & device
+    Remove(RemoveArgs), // Remove book from database
+    Load(LoadArgs),     // add book from database to ereader
+    Unload(UnloadArgs), // remove book from ereader
+    Config(ConfigArgs), // configure app => Config(item, value)
 }
-
 
 #[derive(Args)]
 struct AddArgs {
@@ -65,43 +60,43 @@ struct AddArgs {
     author: String,
     path: String,
     #[arg(default_value_t = false)]
-    install: bool
+    install: bool,
 }
 
 #[derive(Args)]
 struct RemoveArgs {
     title: String,
     #[arg(default_value_t = true)]
-    uninstall: bool
+    uninstall: bool,
 }
-
 
 #[derive(Args)]
 struct LoadArgs {
-    title: String
+    title: String,
 }
 
 #[derive(Args)]
 struct UnloadArgs {
-    title: String
+    title: String,
 }
 
 #[derive(Args)]
 struct ConfigArgs {
-    item: ConfigItem,
-    value: String
+    target: ConfigItem,
+    value: String,
 }
 
 #[derive(Clone, ValueEnum)]
-enum ConfigItem {
+pub(crate) enum ConfigItem {
     EbookPath,
-    LibraryPath
+    LibraryPath,
 }
+
 impl Display for ConfigItem {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
             ConfigItem::EbookPath => write!(f, "Ebook Path"),
-            ConfigItem::LibraryPath => write!(f, "Library Path")
+            ConfigItem::LibraryPath => write!(f, "Library Path"),
         }
     }
 }
