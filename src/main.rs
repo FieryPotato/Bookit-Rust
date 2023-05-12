@@ -1,4 +1,44 @@
-use clap::{Parser, Subcommand};
+use std::fmt;
+use std::fmt::{Display, Formatter};
+use clap::{Parser, Subcommand, Args, ValueEnum};
+
+
+fn main() {
+    let cli = Cli::parse();
+    match cli.command {
+        // list()
+        Some(Commands::List) => println!("Listing books:"),
+
+        // add(path)
+        Some(Commands::Add(path)) => println!(
+            "Adding book with title {} and author {}, from source {}",
+            path.title, path.author, path.path
+        ),
+
+        // remove(path)
+        Some(Commands::Remove(path)) => println!(
+            "Removing book with title {}", path.title
+        ),
+
+        // load(path)
+        Some(Commands::Load(path)) => println!(
+            "Adding book with title {} to ereader", path.title
+        ),
+
+        // Unload(path)
+        Some(Commands::Unload(path)) => println!(
+            "Removing book with title {} from ereader", path.title
+        ),
+
+        // Config(config)
+        Some(Commands::Config(config)) => println!(
+            "Configuring {} to {}", config.item, config.value
+        ),
+
+        // help()
+        None => println!("No command specified"),
+    }
+}
 
 
 #[derive(Parser)]
@@ -8,32 +48,60 @@ struct Cli {
 }
 
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand)]
 enum Commands {
-    List,
-    Add { path: String },
-    Remove { title: String },
-    Load { title: String },
-    Unload { title: String },
-    Config { config: Vec<String> },
-}
-
-#[derive(Subcommand, Debug)]
-enum Configurable {
-    Ereader { path: String },
-    Books { path: String },
+    List,  // List books in database
+    Add(AddArgs),  // Add book to database & device
+    Remove(RemoveArgs),  // Remove book from database
+    Load(LoadArgs),  // add book from database to ereader
+    Unload(UnloadArgs),  // remove book from ereader
+    Config(ConfigArgs),  // configure app => Config(item, value)
 }
 
 
-fn main() {
-    let cli = Cli::parse();
-    match cli.command {
-        Some(Commands::List) => println!("Listing books:"), // list(),
-        Some(Commands::Add { path } ) => println!("adding book from path {}", path), // add(path),
-        Some(Commands::Remove { title } ) => println!("removing book with title {}", title), // (title),
-        Some(Commands::Load { title } ) => println!("Loading book with title {} to ereader", title), // load(title),
-        Some(Commands::Unload { title } ) => println!("Removing book with title {} from ereader", title), // Unload(title),
-        Some(Commands::Config { config } ) => println!("Configuring ereader with args {:?}", config), // Config(args),
-        None => println!("No command specified"),
+#[derive(Args)]
+struct AddArgs {
+    title: String,
+    author: String,
+    path: String,
+    #[arg(default_value_t = false)]
+    install: bool
+}
+
+#[derive(Args)]
+struct RemoveArgs {
+    title: String,
+    #[arg(default_value_t = true)]
+    uninstall: bool
+}
+
+
+#[derive(Args)]
+struct LoadArgs {
+    title: String
+}
+
+#[derive(Args)]
+struct UnloadArgs {
+    title: String
+}
+
+#[derive(Args)]
+struct ConfigArgs {
+    item: ConfigItem,
+    value: String
+}
+
+#[derive(Clone, ValueEnum)]
+enum ConfigItem {
+    EbookPath,
+    LibraryPath
+}
+impl Display for ConfigItem {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match *self {
+            ConfigItem::EbookPath => write!(f, "Ebook Path"),
+            ConfigItem::LibraryPath => write!(f, "Library Path")
+        }
     }
 }
