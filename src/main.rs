@@ -1,9 +1,8 @@
 mod config;
 
-use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap::{Args, Parser, Subcommand};
 
-use std::fmt::{Display, Formatter};
-use std::fmt;
+use config::ConfigItem;
 
 fn main() {
     let cli = Cli::parse();
@@ -23,14 +22,18 @@ fn main() {
         // load(path)
         Some(Commands::Load(path)) => println!("Adding book with title {} to ereader", path.title),
 
-        // Unload(path)
+        // unload(path)
         Some(Commands::Unload(path)) => {
             println!("Removing book with title {} from ereader", path.title)
         }
 
-        // Config(config)
+        // config(config)
         Some(Commands::Config(config)) => {
-            println!("Configuring {} to {}", config.target, config.value)
+            println!("Configuring {} to {}", &config.target, &config.value);
+            match config::configure(config.target, config.value) {
+                Ok(_) => println!("Success"),
+                Err(e) => println!("Failed due to: {}", e),
+            };
         }
 
         // help()
@@ -84,19 +87,4 @@ struct UnloadArgs {
 struct ConfigArgs {
     target: ConfigItem,
     value: String,
-}
-
-#[derive(Clone, ValueEnum)]
-pub(crate) enum ConfigItem {
-    EbookPath,
-    LibraryPath,
-}
-
-impl Display for ConfigItem {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        match *self {
-            ConfigItem::EbookPath => write!(f, "Ebook Path"),
-            ConfigItem::LibraryPath => write!(f, "Library Path"),
-        }
-    }
 }
