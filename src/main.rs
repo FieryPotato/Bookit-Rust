@@ -1,4 +1,6 @@
 mod config;
+mod database;
+mod book;
 
 use clap::{Args, Parser, Subcommand};
 
