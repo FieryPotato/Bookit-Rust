@@ -9,11 +9,12 @@ const ALL_BOOKS_QUERY: &str = "SELECT book_id, title, author FROM books";
 
 
 pub(crate) fn list_books() -> Result<String, DatabaseError> {
-    let books: Vec<Book> = match get_books() {
+    let mut books: Vec<Book> = match get_books() {
         Ok(books) => books,
         Err(e) => return Err(e)
     };
-    Ok(books.iter().map(|book| book.to_string()).collect::<Vec<String>>().join("\n"))
+    books.sort();
+    Ok(books.join("\n"))
 }
 
 
