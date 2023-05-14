@@ -1,10 +1,15 @@
 mod config;
 mod database;
 mod book;
+mod ereader;
 
+use std::fs;
+use std::path::{PathBuf};
 use clap::{Args, Parser, Subcommand};
 
-use config::ConfigItem;
+use crate::config::ConfigItem;
+use crate::book::Book;
+use crate::ereader::load;
 
 fn main() {
     let cli = Cli::parse();
@@ -14,21 +19,17 @@ fn main() {
             Err(e) => {println!("Failed due to: {}", e);}
         },
 
-        // add(path)
-        Some(Commands::Add(path)) => println!(
-            "Adding book with title {} and author {}, from source {}",
-            path.title, path.author, path.path
-        ),
+        Some(Commands::Add(args)) => add_book(args),
 
         // remove(path)
-        Some(Commands::Remove(path)) => println!("Removing book with title {}", path.title),
+        Some(Commands::Remove(args)) => println!("Removing book with title {}", args.title),
 
         // load(path)
-        Some(Commands::Load(path)) => println!("Adding book with title {} to ereader", path.title),
+        Some(Commands::Load(args)) => load_book(args.title),
 
         // unload(path)
-        Some(Commands::Unload(path)) => {
-            println!("Removing book with title {} from ereader", path.title)
+        Some(Commands::Unload(args)) => {
+            println!("Removing book with title {} from ereader", args.title)
         }
 
         Some(Commands::Config(config)) => {
@@ -90,4 +91,43 @@ struct UnloadArgs {
 struct ConfigArgs {
     target: ConfigItem,
     value: String,
+}
+
+
+fn add_book(args: AddArgs) {
+    println!(
+        "Adding book with title {} and author {}, from source {}",
+        args.title, args.author, args.path
+    );
+    let book: Book = Book { title: args.title, author: args.author };
+
+    // move book to library
+    let mut library_path: PathBuf = match config::get_library_path() {
+        Ok(path) => path,
+        Err(e) => {
+            println!("Failed due to: {}", e);
+            return;
+        }
+    };
+    library_path.push(book.file_name());
+    match fs::copy(&PathBuf::from(&args.path), &library_path) {
+        Ok(_) => {},
+        Err(e) => println!("Failed due to: {}", e),
+    }
+
+    // add book to database
+    match database::add_book(&book, &args.path) {
+        Ok(_) => println!("Added {} to library", &book.title),
+        Err(e) => {println!("Failed due to: {}", e);}
+    };
+    if args.install {
+        match load(&book) {
+            Ok(_) => println!("{} added to ereader", &book.title),
+            Err(e) => println!("Failed due to: {}", e)
+        }
+    }
+}
+
+fn load_book(title: String) {
+
 }

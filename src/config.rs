@@ -5,29 +5,37 @@ use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::{BufReader, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 const CONFIG_FILE: &str = "config.json";
 
 fn get_config_item(item: ConfigItem) -> Result<String, ConfigurationError> {
     match item {
-        ConfigItem::EbookPath => Ok(get_config()?.ebook_path),
+        ConfigItem::EreaderPath => Ok(get_config()?.ereader_path),
         ConfigItem::LibraryPath => Ok(get_config()?.library_path),
     }
 }
 
 pub(crate) fn configure(target: ConfigItem, value: String) -> Result<(), ConfigurationError> {
     match target {
-        ConfigItem::EbookPath => set_ebook_path(value),
+        ConfigItem::EreaderPath => set_ereader_path(value),
         ConfigItem::LibraryPath => set_library_path(value),
     }
 }
 
-fn set_ebook_path(value: String) -> Result<(), ConfigurationError> {
+fn set_ereader_path(value: String) -> Result<(), ConfigurationError> {
     let mut config: Configuration = get_config()?;
-    config.ebook_path = value;
+    config.ereader_path = value;
     set_config(config)?;
     Ok(())
+}
+
+pub(crate) fn get_ereader_path() -> Result<PathBuf, ConfigurationError> {
+    let path: String = get_config_item(ConfigItem::EreaderPath)?;
+    if path.len() == 0 {
+        return Err(ConfigurationError::NoEreaderPath)
+    }
+    Ok(PathBuf::from(path))
 }
 
 fn set_library_path(value: String) -> Result<(), ConfigurationError> {
@@ -35,6 +43,14 @@ fn set_library_path(value: String) -> Result<(), ConfigurationError> {
     config.library_path = value;
     set_config(config)?;
     Ok(())
+}
+
+pub(crate) fn get_library_path() -> Result<PathBuf, ConfigurationError> {
+    let path: String = get_config_item(ConfigItem::LibraryPath)?;
+    if path.len() == 0 {
+        return Err(ConfigurationError::NoLibraryPath)
+    }
+    Ok(PathBuf::from(path))
 }
 
 fn set_config(config: Configuration) -> Result<(), ConfigurationError> {
@@ -88,7 +104,7 @@ fn create_config_file() -> Result<(), ConfigurationError> {
         Err(e) => return Err(ConfigurationError::IOError(e)),
     };
     let default_settings = json!({
-        "ebook_path": "",
+        "ereader_path": "",
         "library_path": ""
     })
     .to_string();
@@ -100,33 +116,37 @@ fn create_config_file() -> Result<(), ConfigurationError> {
 
 #[derive(Serialize, Deserialize)]
 struct Configuration {
-    ebook_path: String,
+    ereader_path: String,
     library_path: String,
 }
 
 pub(crate) enum ConfigurationError {
     IOError(std::io::Error),
     JSONError(Error),
+    NoEreaderPath,
+    NoLibraryPath,
 }
 impl Display for ConfigurationError {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             ConfigurationError::IOError(e) => write!(f, "{}", e),
             ConfigurationError::JSONError(e) => write!(f, "{}", e),
+            ConfigurationError::NoEreaderPath => write!(f, "No Ereader Path"),
+            ConfigurationError::NoLibraryPath => write!(f, "No Library Path"),
         }
     }
 }
 
 #[derive(Clone, ValueEnum)]
 pub(crate) enum ConfigItem {
-    EbookPath,
+    EreaderPath,
     LibraryPath,
 }
 
 impl Display for ConfigItem {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match *self {
-            ConfigItem::EbookPath => write!(f, "Ebook Path"),
+            ConfigItem::EreaderPath => write!(f, "Ereader Path"),
             ConfigItem::LibraryPath => write!(f, "Library Path"),
         }
     }

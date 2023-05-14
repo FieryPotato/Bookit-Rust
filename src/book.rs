@@ -1,8 +1,18 @@
+
 #[derive(Debug, Clone, PartialEq, Eq, Ord)]
 pub(crate) struct Book {
     pub(crate) title: String,
     pub(crate) author: String,
 }
+
+impl Book {
+    pub(crate) fn file_name(&self) -> String {
+        let path_title: String = self.title.replace(" ","_");
+        let path_author: String = self.author.replace(" ","_");
+        format!("{}-{}", path_title, path_author)
+    }
+}
+
 impl Book {
     pub(crate) fn to_string(&self) -> String {
         format!("{} — {}", self.title, self.author)
