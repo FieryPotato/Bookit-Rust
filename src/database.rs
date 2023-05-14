@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use rusqlite::{Connection, Result, NO_PARAMS};
+use rusqlite::{Connection, NO_PARAMS};
 
 use crate::book::Book;
 
@@ -24,15 +24,31 @@ fn get_books() -> Result<Vec<Book>, DatabaseError> {
             return Err(DatabaseError::ErrorOpeningTable(e));
         }
     };
-    let stmt = match conn.prepare(ALL_BOOKS) {
+    let mut stmt = match conn.prepare(ALL_BOOKS) {
         Ok(s) => s,
         Err(e) => {
             return Err(DatabaseError::ErrorGettingBooks(e));
         }
     };
     let books = stmt.query_map(NO_PARAMS, |row| {
-        Ok()
-    })
+        Ok(
+            Book {
+                title: match row.get(0) {
+                    Ok(title) => title,
+                    Err(e) => {
+                        return Err(DatabaseError::ErrorGettingBooks(e));
+                    }
+                },
+
+                author: match row.get(1) {
+                    Ok(author) => author,
+                    Err(e) => {
+                        return Err(DatabaseError::ErrorGettingBooks(e));
+                    }
+                }
+            }
+        )
+    });
 
     Ok(())
 }

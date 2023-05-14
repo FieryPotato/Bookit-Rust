@@ -1,4 +1,4 @@
 pub(crate) struct Book {
-    title: String,
-    author: String,
+    pub(crate) title: String,
+    pub(crate) author: String,
 }
