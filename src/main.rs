@@ -9,8 +9,10 @@ use config::ConfigItem;
 fn main() {
     let cli = Cli::parse();
     match cli.command {
-        // list()
-        Some(Commands::List) => println!("Listing books:"),
+        Some(Commands::List) => match database::list_books() {
+            Ok(books) => {println!("{}", books);}
+            Err(e) => {println!("Failed due to: {}", e);}
+        },
 
         // add(path)
         Some(Commands::Add(path)) => println!(
@@ -29,7 +31,6 @@ fn main() {
             println!("Removing book with title {} from ereader", path.title)
         }
 
-        // config(config)
         Some(Commands::Config(config)) => {
             println!("Configuring {} to {}", &config.target, &config.value);
             match config::configure(config.target, config.value) {

@@ -5,10 +5,19 @@ use crate::book::Book;
 
 
 const DATABASE_PATH: &str = "./books.db";
-const ALL_BOOKS: &str = "SELECT book_id, title, author FROM books";
+const ALL_BOOKS_QUERY: &str = "SELECT book_id, title, author FROM books";
 
 
-pub(crate) fn get_books() -> Result<Vec<Book>, DatabaseError> {
+pub(crate) fn list_books() -> Result<String, DatabaseError> {
+    let books: Vec<Book> = match get_books() {
+        Ok(books) => books,
+        Err(e) => return Err(e)
+    };
+    Ok(books.iter().map(|book| book.to_string()).collect::<Vec<String>>().join("\n"))
+}
+
+
+fn get_books() -> Result<Vec<Book>, DatabaseError> {
     let conn = match Connection::open(DATABASE_PATH) {
         Ok(c) => c,
         Err(e) => {
@@ -29,7 +38,7 @@ pub(crate) fn get_books() -> Result<Vec<Book>, DatabaseError> {
 }
 
 fn query_books(conn: &Connection) -> Result<Vec<Book>, rusqlite::Error> {
-    let mut stmt = conn.prepare(ALL_BOOKS)?;
+    let mut stmt = conn.prepare(ALL_BOOKS_QUERY)?;
     let book_map = stmt.query_map(params![], |row| {
         Ok(Book {
             title: row.get(1)?,
