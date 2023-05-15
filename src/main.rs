@@ -24,8 +24,12 @@ fn main() {
         // remove(path)
         Some(Commands::Remove(args)) => println!("Removing book with title {}", args.title),
 
-        // load(path)
-        Some(Commands::Load(args)) => load_book(args.title),
+        Some(Commands::Load(args)) => match load(&Book {
+            title: args.title, author: args.author
+        }) {
+            Ok(_) => println!("Successfully added book to ereader"),
+            Err(e) => println!("Failed due to: {}", e)
+        },
 
         // unload(path)
         Some(Commands::Unload(args)) => {
@@ -80,6 +84,7 @@ struct RemoveArgs {
 #[derive(Args)]
 struct LoadArgs {
     title: String,
+    author: String
 }
 
 #[derive(Args)]
@@ -126,8 +131,4 @@ fn add_book(args: AddArgs) {
             Err(e) => println!("Failed due to: {}", e)
         }
     }
-}
-
-fn load_book(title: String) {
-
 }
