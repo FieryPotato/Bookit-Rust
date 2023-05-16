@@ -23,6 +23,19 @@ pub(crate) fn load(book: &Book) -> Result<(), EreaderError> {
     }
 }
 
+pub(crate) fn unload(book: &Book) -> Result<(), EreaderError> {
+    let ereader_path: PathBuf = match config::get_ereader_path() {
+        Ok(path) => path,
+        Err(ConfigurationError::NoEreaderPath) => return Err(EreaderError::NoEreaderPath),
+        Err(e) => return Err(EreaderError::ConfigError(e))
+    };
+    if !ereader_path.exists() { return Err(EreaderError::EreaderNotConnected) };
+    let book_path: PathBuf = match database::get_book_path(book) {
+        Ok(path) => path,
+        Err(e) => return Err(EreaderError::DatabaseError(e))
+    };
+}
+
 
 pub(crate) enum EreaderError {
     NoEreaderPath,
